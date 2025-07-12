@@ -3,21 +3,28 @@ import { updateSubmissionStatus } from '../../../lib/database';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { table, id, status } = await request.json();
+    const { id, status, type } = await request.json();
     
-    if (!table || !id || !status) {
+    if (!id || !status || !type) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
     
-    const result = await updateSubmissionStatus(table, id, status);
+    const result = await updateSubmissionStatus(id, status, type);
     
-    return new Response(JSON.stringify({ success: true, data: result }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    if (result.success) {
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } else {
+      return new Response(JSON.stringify({ error: result.error }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   } catch (error) {
     console.error('Error updating status:', error);
     return new Response(JSON.stringify({ error: 'Failed to update status' }), {

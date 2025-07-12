@@ -135,8 +135,6 @@ import Footer from '../../components/Footer.astro';
 </Layout>
 
 <script>
-  import { getContactSubmissions, getEnrollmentSubmissions, updateSubmissionStatus } from '../../lib/database'
-  
   document.addEventListener('DOMContentLoaded', async function() {
     // Tab functionality
     const tabButtons = document.querySelectorAll('.tab-button')
@@ -168,12 +166,15 @@ import Footer from '../../components/Footer.astro';
   
   async function loadDashboardData() {
     try {
-      // Load data from PostgreSQL database via API
+      // Load data from Supabase database via API
       const contactResponse = await fetch('/api/admin/contacts');
       const enrollmentResponse = await fetch('/api/admin/enrollments');
       
-      const contactSubmissions = await contactResponse.json();
-      const enrollmentSubmissions = await enrollmentResponse.json();
+      const contactResult = await contactResponse.json();
+      const enrollmentResult = await enrollmentResponse.json();
+      
+      const contactSubmissions = Array.isArray(contactResult) ? contactResult : [];
+      const enrollmentSubmissions = Array.isArray(enrollmentResult) ? enrollmentResult : [];
       
       // Update stats
       document.getElementById('contact-count').textContent = contactSubmissions.length
@@ -285,7 +286,21 @@ import Footer from '../../components/Footer.astro';
   
   window.updateStatus = async function(table, id, status) {
     try {
-      await updateSubmissionStatus(table, id, status)
+      const type = table === 'contact_submissions' ? 'contact' : 'enrollment';
+      const response = await fetch('/api/admin/update-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, status, type })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to update status');
+      }
+      
       await loadDashboardData() // Reload data
       alert('Status updated successfully!')
     } catch (error) {
