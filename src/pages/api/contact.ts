@@ -3,7 +3,25 @@ import { submitContactForm } from '../../lib/database';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const data = await request.json();
+    // Read request body as text first to handle empty/malformed JSON
+    const bodyText = await request.text();
+    
+    if (!bodyText || bodyText.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Request body is empty' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let data;
+    try {
+      data = JSON.parse(bodyText);
+    } catch (parseError) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON format' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Validate required fields
     if (!data.firstName || !data.lastName || !data.email || !data.message) {
