@@ -3,6 +3,15 @@ import { submitContactForm } from '../../lib/database';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Check for empty request body
+    const contentLength = request.headers.get('Content-Length');
+    if (contentLength === '0' || contentLength === null) {
+      return new Response(JSON.stringify({ error: 'Request body is empty' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const data = await request.json();
 
     // Validate required fields
