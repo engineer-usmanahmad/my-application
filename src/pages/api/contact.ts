@@ -1,17 +1,9 @@
 import type { APIRoute } from 'astro';
 import { submitContactForm } from '../../lib/database';
+import { submitContactForm } from '../../lib/database';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    // Check for empty request body
-    const contentLength = request.headers.get('Content-Length');
-    if (contentLength === '0' || contentLength === null) {
-      return new Response(JSON.stringify({ error: 'Request body is empty' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
     const data = await request.json();
 
     // Validate required fields
@@ -31,13 +23,13 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Submit to database
+    // Submit to Supabase database
     const result = await submitContactForm({
       first_name: data.firstName,
       last_name: data.lastName,
       email: data.email,
-      phone: data.phone,
-      course_interest: data.course,
+      phone: data.phone || '',
+      course_interest: data.course || 'General',
       message: data.message
     });
 

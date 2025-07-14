@@ -1,11 +1,42 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = import.meta.env.SUPABASE_ANON_KEY || 'your-anon-key';
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Supabase environment variables not found. Please check your .env file.');
+}
 
 export const supabase = supabaseUrl && supabaseAnonKey 
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
+
+// Type definitions for database tables
+export interface ContactSubmission {
+  id?: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  course_interest: string;
+  message: string;
+  status: 'new' | 'in_progress' | 'resolved' | 'closed';
+  created_at?: string;
+}
+
+export interface EnrollmentSubmission {
+  id?: number;
+  course_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  experience_level: 'beginner' | 'intermediate' | 'advanced';
+  learning_goals: string;
+  is_free: boolean;
+  status: 'pending' | 'enrolled' | 'payment_pending' | 'cancelled';
+  created_at?: string;
+}
 
 export const trainers = [
   {

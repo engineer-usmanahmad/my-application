@@ -113,6 +113,7 @@ const { courseId, courseTitle, isFree = false } = Astro.props;
             required
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
+            <option value="">Select your level</option>
             <option value="beginner">Complete Beginner</option>
             <option value="intermediate">Intermediate</option>
             <option value="advanced">Advanced</option>
@@ -230,8 +231,8 @@ const { courseId, courseTitle, isFree = false } = Astro.props;
       const data = Object.fromEntries(formData);
       
       // Basic validation
-      if (!data.firstName || !data.lastName || !data.email || !data.phone || !data.terms) {
-        alert('Please fill in all required fields and accept the terms.');
+      if (!data.firstName || !data.lastName || !data.email || !data.phone || !data.experience || !data.terms) {
+        alert('Please fill in all required fields, select your experience level, and accept the terms.');
         return;
       }
       
@@ -242,7 +243,14 @@ const { courseId, courseTitle, isFree = false } = Astro.props;
         return;
       }
       
-      // Simulate enrollment process
+      // Validate experience level
+      const validLevels = ['beginner', 'intermediate', 'advanced'];
+      if (!validLevels.includes(data.experience)) {
+        alert('Please select a valid experience level.');
+        return;
+      }
+      
+      // Submit enrollment
       const submitBtn = form.querySelector('button[type="submit"]');
       const originalText = submitBtn.innerHTML;
       
@@ -250,7 +258,7 @@ const { courseId, courseTitle, isFree = false } = Astro.props;
       submitBtn.disabled = true;
       
       try {
-        // Store enrollment data in PostgreSQL database via API
+        // Submit enrollment data to Supabase database via API
         const response = await fetch('/api/enrollment', {
           method: 'POST',
           headers: {
@@ -266,16 +274,16 @@ const { courseId, courseTitle, isFree = false } = Astro.props;
         }
         
         if (data.isFree === 'true') {
-          alert(`🎉 Congratulations! You've successfully enrolled in the ${data.courseId} course.\n\nYou now have access to:\n• Complete video training series\n• Course materials\n• WhatsApp community\n• Certificate upon completion\n\nCheck your email for access details!`);
+          alert(`🎉 Congratulations! You've successfully enrolled in the ${data.courseId} course.\n\nYou now have access to:\n• Complete video training series\n• Course materials\n• WhatsApp community\n• Certificate upon completion\n\nOur team will contact you with access details within 24 hours!`);
         } else {
-          alert(`Thank you for your interest in ${data.courseId}!\n\nOur team will contact you within 24 hours to complete the enrollment process and discuss payment options.\n\nYou can also reach us directly via WhatsApp for immediate assistance.`);
+          alert(`Thank you for enrolling in ${data.courseId}!\n\nYour enrollment has been submitted successfully. Our team will contact you within 24 hours to:\n• Complete the enrollment process\n• Discuss payment options\n• Provide course access details\n\nYou can also reach us directly via WhatsApp for immediate assistance.`);
         }
         
         closeModal();
         form.reset();
       } catch (error) {
         console.error('Enrollment error:', error);
-        alert('Sorry, there was an error processing your enrollment. Please try again or contact us directly.');
+        alert('Sorry, there was an error processing your enrollment. Please try again or contact us directly via WhatsApp.');
       } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
