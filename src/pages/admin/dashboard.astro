@@ -5,6 +5,31 @@ import Footer from '../../components/Footer.astro';
 import { supabase } from '../../lib/supabase';
 ---
 
+export const prerender = false;
+
+// Fetch dashboard data
+const { data: contactStats } = await supabase
+  .from('contact_submissions')
+  .select('status')
+  .order('created_at', { ascending: false });
+
+const { data: enrollmentStats } = await supabase
+  .from('enrollment_submissions')
+  .select('status, course_id')
+  .order('created_at', { ascending: false });
+
+const { data: recentContacts } = await supabase
+  .from('contact_submissions')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .limit(5);
+
+const { data: recentEnrollments } = await supabase
+  .from('enrollment_submissions')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .limit(5);
+
 <Layout title="Admin Dashboard - LbisTech">
   <Header />
   <main class="pt-20">
