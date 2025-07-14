@@ -7,7 +7,7 @@ import { submitContactForm } from '../lib/database'
   <form class="space-y-6" id="contact-form">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
-        <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+        <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
         <input 
           type="text" 
           id="firstName"
@@ -17,7 +17,7 @@ import { submitContactForm } from '../lib/database'
         />
       </div>
       <div>
-        <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+        <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
         <input 
           type="text" 
           id="lastName"
@@ -29,7 +29,7 @@ import { submitContactForm } from '../lib/database'
     </div>
     
     <div>
-      <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+      <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
       <input 
         type="email" 
         id="email"
@@ -71,7 +71,7 @@ import { submitContactForm } from '../lib/database'
     </div>
     
     <div>
-      <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+      <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message *</label>
       <textarea 
         id="message"
         name="message"
@@ -84,6 +84,7 @@ import { submitContactForm } from '../lib/database'
     
     <button 
       type="submit"
+      id="submit-btn"
       class="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
     >
       Send Message
@@ -95,75 +96,143 @@ import { submitContactForm } from '../lib/database'
 </div>
 
 <script>
-  // Contact form handling with Supabase database storage
-  const contactForm = document.getElementById('contact-form');
-  const formMessage = document.getElementById('form-message');
-  
-  contactForm?.addEventListener('submit', async function(e) {
-    e.preventDefault();
+  // Contact form handling with comprehensive error handling and debugging
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Contact form script loaded');
     
-    // Get form data
-    const formData = new FormData(contactForm);
-    const data = Object.fromEntries(formData);
+    const contactForm = document.getElementById('contact-form') as HTMLFormElement;
+    const formMessage = document.getElementById('form-message') as HTMLElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
     
-    // Basic validation
-    if (!data.firstName || !data.lastName || !data.email || !data.message) {
-      showMessage('Please fill in all required fields.', 'error');
+    if (!contactForm) {
+      console.error('Contact form not found');
       return;
     }
     
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email)) {
-      showMessage('Please enter a valid email address.', 'error');
-      return;
-    }
-    
-    // Show loading state
-    const submitBtn = contactForm.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Sending...';
-    submitBtn.disabled = true;
-    
-    try {
-      // Submit to Supabase database via API
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-      });
+    contactForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      console.log('Form submission started');
       
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
-        showMessage('Thank you for your message! We have received your inquiry and will get back to you within 24 hours.', 'success');
+      try {
+        // Get form elements
+        const firstName = (document.getElementById('firstName') as HTMLInputElement)?.value?.trim();
+        const lastName = (document.getElementById('lastName') as HTMLInputElement)?.value?.trim();
+        const email = (document.getElementById('email') as HTMLInputElement)?.value?.trim();
+        const phone = (document.getElementById('phone') as HTMLInputElement)?.value?.trim();
+        const course = (document.getElementById('course') as HTMLSelectElement)?.value?.trim();
+        const message = (document.getElementById('message') as HTMLTextAreaElement)?.value?.trim();
+        
+        console.log('Form data extracted:', {
+          firstName,
+          lastName,
+          email,
+          phone,
+          course,
+          message: message ? 'Present' : 'Missing'
+        });
+        
+        // Client-side validation
+        if (!firstName || !lastName || !email || !message) {
+          throw new Error('Please fill in all required fields (marked with *)');
+        }
+        
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          throw new Error('Please enter a valid email address');
+        }
+        
+        // Prepare data for API
+        const formData = {
+          firstName,
+          lastName,
+          email,
+          phone: phone || '',
+          course: course || 'General',
+          message
+        };
+        
+        console.log('Sending data to API:', formData);
+        
+        // Show loading state
+        const originalText = submitBtn.textContent;
+        submitBtn.innerHTML = `
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Sending...
+        `;
+        submitBtn.disabled = true;
+        
+        // Submit to API
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        console.log('API response status:', response.status);
+        
+        const result = await response.json();
+        console.log('API response data:', result);
+        
+        if (!response.ok) {
+          throw new Error(result.error || `Server error: ${response.status}`);
+        }
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to submit form');
+        }
+        
+        // Success
+        console.log('Form submitted successfully');
+        showMessage(
+          '✅ Thank you for your message! We have received your inquiry and will get back to you within 24 hours.',
+          'success'
+        );
         contactForm.reset();
-      } else {
-        throw new Error(result.error || 'Failed to submit form');
+        
+      } catch (error) {
+        console.error('Form submission error:', error);
+        
+        let errorMessage = 'Sorry, there was an error submitting your message.';
+        
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        
+        // Add helpful fallback information
+        errorMessage += ' Please try again or contact us directly via WhatsApp at +92 324 4280044.';
+        
+        showMessage(errorMessage, 'error');
+        
+      } finally {
+        // Reset button state
+        submitBtn.textContent = 'Send Message';
+        submitBtn.disabled = false;
       }
-    } catch (error) {
-      console.error('Error:', error);
-      showMessage('Sorry, there was an error submitting your message. Please try again or contact us directly via WhatsApp.', 'error');
-    } finally {
-      submitBtn.innerHTML = originalText;
-      submitBtn.disabled = false;
+    });
+    
+    function showMessage(message: string, type: 'success' | 'error') {
+      if (!formMessage) return;
+      
+      formMessage.className = `mt-4 p-4 rounded-lg ${
+        type === 'success' 
+          ? 'bg-green-50 border border-green-200 text-green-800' 
+          : 'bg-red-50 border border-red-200 text-red-800'
+      }`;
+      formMessage.textContent = message;
+      formMessage.classList.remove('hidden');
+      
+      // Auto-hide success messages after 8 seconds
+      if (type === 'success') {
+        setTimeout(() => {
+          formMessage.classList.add('hidden');
+        }, 8000);
+      }
     }
   });
-  
-  function showMessage(message, type) {
-    formMessage.className = `mt-4 p-4 rounded-lg ${
-      type === 'success' 
-        ? 'bg-green-50 border border-green-200 text-green-800' 
-        : 'bg-red-50 border border-red-200 text-red-800'
-    }`;
-    formMessage.textContent = message;
-    formMessage.classList.remove('hidden');
-    
-    // Hide message after 5 seconds
-    setTimeout(() => {
-      formMessage.classList.add('hidden');
-    }, 5000);
-  }
 </script>

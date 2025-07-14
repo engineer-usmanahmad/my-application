@@ -1,15 +1,38 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Environment variable validation with detailed logging
 const supabaseUrl = import.meta.env.SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.SUPABASE_ANON_KEY;
 
+console.log('Supabase configuration check:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  urlLength: supabaseUrl?.length || 0,
+  keyLength: supabaseAnonKey?.length || 0
+});
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase environment variables not found. Please check your .env file.');
+  console.error('❌ Supabase environment variables missing!');
+  console.error('Required variables:');
+  console.error('- SUPABASE_URL:', supabaseUrl ? '✅ Present' : '❌ Missing');
+  console.error('- SUPABASE_ANON_KEY:', supabaseAnonKey ? '✅ Present' : '❌ Missing');
+  console.error('Please check your .env file and ensure these variables are set correctly.');
 }
 
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+let supabase = null;
+
+try {
+  if (supabaseUrl && supabaseAnonKey) {
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    console.log('✅ Supabase client initialized successfully');
+  } else {
+    console.error('❌ Cannot initialize Supabase client - missing environment variables');
+  }
+} catch (error) {
+  console.error('❌ Failed to initialize Supabase client:', error);
+}
+
+export { supabase };
 
 // Type definitions for database tables
 export interface ContactSubmission {

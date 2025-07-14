@@ -22,7 +22,13 @@ export interface EnrollmentFormData {
 
 export async function submitContactForm(data: ContactFormData) {
   try {
+    console.log('submitContactForm called with data:', {
+      ...data,
+      message: data.message ? 'Present' : 'Missing'
+    });
+    
     if (!supabase) {
+      console.error('❌ Supabase client not initialized');
       throw new Error('Supabase client not initialized');
     }
 
@@ -30,6 +36,7 @@ export async function submitContactForm(data: ContactFormData) {
     const requiredFields = ['first_name', 'last_name', 'email', 'message'];
     for (const field of requiredFields) {
       if (!data[field as keyof ContactFormData]) {
+        console.error(`❌ Missing required field: ${field}`);
         throw new Error(`Missing required field: ${field}`);
       }
     }
@@ -37,9 +44,12 @@ export async function submitContactForm(data: ContactFormData) {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
+      console.error('❌ Invalid email format:', data.email);
       throw new Error('Invalid email format');
     }
 
+    console.log('✅ Validation passed, inserting into Supabase...');
+    
     // Insert into Supabase
     const { data: result, error } = await supabase
       .from('contact_submissions')
@@ -56,10 +66,17 @@ export async function submitContactForm(data: ContactFormData) {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('❌ Supabase insertion error:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       throw new Error(`Database error: ${error.message}`);
     }
 
+    console.log('✅ Contact form submitted successfully:', result?.id);
+    
     return {
       success: true,
       data: result,
@@ -67,7 +84,11 @@ export async function submitContactForm(data: ContactFormData) {
     };
 
   } catch (error) {
-    console.error('Contact form submission error:', error);
+    console.error('❌ Contact form submission error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
